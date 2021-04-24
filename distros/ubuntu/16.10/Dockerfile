@@ -12,4 +12,4 @@ RUN apt-get -qq update && \
     wget -O "/tmp/fluent-bit-${FLB_VERSION}.zip" ${FLB_TARBALL} && \
     cd /tmp && unzip "fluent-bit-$FLB_VERSION.zip"
 
-CMD cd "/tmp/fluent-bit-${FLB_VERSION}/" && ./debian.sh && cp ../*.deb /output
+CMD cd "/tmp/fluent-bit-${FLB_VERSION}/" && ./debian.sh && cp ./bin/fluent-bit /output/
