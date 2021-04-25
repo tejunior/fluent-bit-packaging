@@ -2,8 +2,7 @@ name: Build release
 
 on:
   push:
-    branches:
-      - '*'
+    branches: main
 
 jobs:
   build-distro-packages:
@@ -55,8 +54,9 @@ jobs:
       - name: Archive the release artifacts (packages)
         uses: actions/upload-artifact@v2
         with:
-          name: artifacts
+          name: nrfb-linux-${{env.distro-name}}
           path: |
             packages/${{env.distro}}/${{env.FB_LINUX_VERSION}}/**/*.tar.gz
         env:
           distro: ${{ matrix.distro }}
+          distro-name: ${{ steps.formatted_distro.outputs.replaced }}
