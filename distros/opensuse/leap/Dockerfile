@@ -2,13 +2,11 @@ FROM flb-build-base-opensuse/leap
 
 ARG FLB_PREFIX
 ARG FLB_VERSION
-ARG FLB_SRC
 
 ENV FLB_TARBALL http://github.com/fluent/fluent-bit/archive/$FLB_PREFIX$FLB_VERSION.zip
-COPY sources/$FLB_SRC /
 
 RUN cd /tmp && \
-    if [ "x$FLB_SRC" = "x" ] ; then wget -O "/tmp/fluent-bit-${FLB_VERSION}.zip" ${FLB_TARBALL} && unzip "fluent-bit-$FLB_VERSION.zip" ; else tar zxfv "/$FLB_SRC" ; fi && \
+    wget -O "/tmp/fluent-bit-${FLB_VERSION}.zip" ${FLB_TARBALL} && unzip "fluent-bit-$FLB_VERSION.zip" && \
     cd "/tmp/fluent-bit-${FLB_VERSION}/build" && \
     export CFLAGS="$CFLAGS -std=gnu99" && \
     cmake ../
