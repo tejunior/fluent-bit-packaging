@@ -2,8 +2,6 @@ name: Publish release
 on:
   workflow_run:
     workflows: [ 'Build release' ]
-    branches:
-      - '*'
     types:
       - completed
 
@@ -63,9 +61,15 @@ jobs:
           flags: 'g'
 
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: dawidd6/action-download-artifact@v2
         with:
-          path: ./
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          workflow: build-release.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: nrfb-linux-${{env.distro-name}}
+          path: artifacts
+        env:
+          distro-name: ${{ steps.formatted_distro.outputs.replaced }}
 
       - name: Move artifacts to main folder
         run: |
