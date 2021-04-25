@@ -1,0 +1,62 @@
+name: Build release
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  build-distro-packages:
+    name: build packages
+    strategy:
+      max-parallel: 48
+      fail-fast: true
+      matrix:
+        distro: [ amazonlinux/2, ubuntu/18.04 ]
+
+    runs-on: [ ubuntu-latest ] #self-hosted, Linux, X64, packet-builder]
+    steps:
+      - name: Setup environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install   --yes qemu binfmt-support qemu-user-static qemu-utils qemu-efi-aarch64 qemu-system-arm docker.io containerd runc
+          sudo systemctl unmask docker && sudo systemctl start docker
+          docker run --rm --privileged --name qemu multiarch/qemu-user-static:register --reset
+
+      - uses: actions/checkout@v2
+
+      - name: Retrieve linux version
+        run: echo "FB_LINUX_VERSION=$(awk -F, '/^linux,/ {print $2}' nr_fb_version)"  >> $GITHUB_ENV
+
+      - name: Print version
+        run: echo "FB_LINUX = ${{ env.FB_LINUX_VERSION }}"
+
+      - uses: frabert/replace-string-action@master
+        id: formatted_distro
+        with:
+          pattern: '(.*)\/(.*)$'
+          string: "${{ matrix.distro }}"
+          replace-with: '$1-$2'
+          flags: 'g'
+
+      - name: Build the distro artifacts
+        run: ./build.sh -v ${{ env.FB_LINUX_VERSION }} -d ${{ env.distro }}
+        env:
+          distro: ${{ matrix.distro }}
+
+      - name: Generate tarball
+        run: |
+          cd packages/${{env.distro}}/${{ env.FB_LINUX_VERSION }}/*/
+          tar -czf nrfb-linux-${{env.distro-name}}.tar.gz fluent-bit
+        env:
+          distro: ${{ matrix.distro }}
+          distro-name: ${{ steps.formatted_distro.outputs.replaced }}
+
+      - name: Archive the release artifacts (packages)
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: |
+            packages/${{env.distro}}/${{env.FB_LINUX_VERSION}}/**/*.tar.gz
+        env:
+          distro: ${{ matrix.distro }}
