@@ -102,11 +102,6 @@ jobs:
           name: nrfb-windows-386
           path: artifacts
 
-      - name: Move artifacts to main folder
-        run: |
-          mv artifacts/**/*.zip .
-          ls -la
-
       - name: Upload Assets
         uses: actions/upload-release-asset@v1
         env:
@@ -131,11 +126,6 @@ jobs:
           run_id: ${{ github.event.workflow_run.id }}
           name: nrfb-windows-amd64
           path: artifacts
-
-      - name: Move artifacts to main folder
-        run: |
-          mv artifacts/**/*.zip .
-          ls -la
 
       - name: Upload Assets
         uses: actions/upload-release-asset@v1
