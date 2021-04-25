@@ -87,3 +87,63 @@ jobs:
           asset_path: ./nrfb-linux-${{env.distro-name}}.tar.gz
           asset_name: nrfb-linux-${{env.distro-name}}.tar.gz
           asset_content_type: application/gzip
+
+  publish-win32:
+    needs: create-release
+
+    runs-on: [ ubuntu-latest ] #self-hosted, Linux, X64, packet-builder]
+    steps:
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          workflow: build-release.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: nrfb-windows-386
+          path: artifacts
+
+      - name: Move artifacts to main folder
+        run: |
+          mv artifacts/**/*.zip .
+          ls -la
+
+      - name: Upload Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          upload-url: ${{ needs.create-release.outputs.upload_url }}
+        with:
+          upload_url: ${{ env.upload-url }}
+          asset_path: ./artifacts/nrfb-windows-386.zip
+          asset_name: fb-windows-386.zip
+          asset_content_type: application/zip
+
+  publish-win64:
+    needs: create-release
+
+    runs-on: [ ubuntu-latest ] #self-hosted, Linux, X64, packet-builder]
+    steps:
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          workflow: build-release.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: nrfb-windows-amd64
+          path: artifacts
+
+      - name: Move artifacts to main folder
+        run: |
+          mv artifacts/**/*.zip .
+          ls -la
+
+      - name: Upload Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          upload-url: ${{ needs.create-release.outputs.upload_url }}
+        with:
+          upload_url: ${{ env.upload-url }}
+          asset_path: ./artifacts/nrfb-windows-amd64.zip
+          asset_name: fb-windows-amd64.zip
+          asset_content_type: application/zip
