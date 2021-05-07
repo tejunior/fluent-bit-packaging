@@ -11,10 +11,7 @@ jobs:
       max-parallel: 48
       fail-fast: true
       matrix:
-        distro: [ amazonlinux/2, amazonlinux/2.arm64v8, centos/7, centos/7.arm64v8, debian/jessie,
-                  debian/jessie.arm64v8, debian/stretch, debian/stretch.arm64v8, debian/buster,
-                  debian/buster.arm64v8, ubuntu/16.04, ubuntu/18.04, ubuntu/20.04, ubuntu/18.04.arm64v8,
-                  ubuntu/20.04.arm64v8, opensuse/leap ]
+        distro: [ amazonlinux/2 ]
 
     runs-on: [ ubuntu-latest ] #self-hosted, Linux, X64, packet-builder]
     steps:
