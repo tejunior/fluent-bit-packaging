@@ -121,6 +121,10 @@ jobs:
             target: ubuntu/focal/
             format: deb
 
+          - distro: opensuse/leap
+            target: opensuse/leap/
+            format: rpm
+
     runs-on: [ ubuntu-latest ] #self-hosted, Linux, X64, packet-builder]
     steps:
       - uses: frabert/replace-string-action@master
