@@ -1,0 +1,116 @@
+name: Build release
+
+on:
+  push:
+    branches: master
+
+jobs:
+  build-distro-packages:
+    name: build packages
+    strategy:
+      max-parallel: 48
+      fail-fast: true
+      matrix:
+        distro: [ amazonlinux/2 ]
+
+    runs-on: [ ubuntu-latest ] #self-hosted, Linux, X64, packet-builder]
+    steps:
+      - name: Setup environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install   --yes qemu binfmt-support qemu-user-static qemu-utils qemu-efi-aarch64 qemu-system-arm docker.io containerd runc
+          sudo systemctl unmask docker && sudo systemctl start docker
+          docker run --rm --privileged --name qemu multiarch/qemu-user-static:register --reset
+
+      - uses: actions/checkout@v2
+
+      - name: Retrieve linux version
+        run: echo "FB_LINUX_VERSION=$(awk -F, '/^linux,/ {print $2}' nr_fb_version)"  >> $GITHUB_ENV
+
+      - name: Print version
+        run: echo "FB_LINUX = ${{ env.FB_LINUX_VERSION }}"
+
+      - uses: frabert/replace-string-action@master
+        id: formatted_distro
+        with:
+          pattern: '(.*)\/(.*)$'
+          string: "${{ matrix.distro }}"
+          replace-with: '$1-$2'
+          flags: 'g'
+
+      - name: Build the distro artifacts
+        run: ./build.sh -v ${{ env.FB_LINUX_VERSION }} -d ${{ env.distro }}
+        env:
+          distro: ${{ matrix.distro }}
+
+      - name: Archive the release artifacts (packages)
+        uses: actions/upload-artifact@v2
+        with:
+          name: nrfb-linux-${{env.distro-name}}
+          path: |
+            packages/${{env.distro}}/${{env.FB_LINUX_VERSION}}/**/*
+        env:
+          distro: ${{ matrix.distro }}
+          distro-name: ${{ steps.formatted_distro.outputs.replaced }}
+
+  win32:
+
+    name: Build Windows 386
+    runs-on: ubuntu-16.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Retrieve win version
+        run: echo "FB_WIN_VERSION=$(awk -F, '/^windows,/ {print $2}' nr_fb_version)"  >> $GITHUB_ENV
+
+      - name: Print version
+        run: echo "FB_WIN= ${{ env.FB_WIN_VERSION}}"
+
+      - name: Download FB for windows32 & create artifact
+        run: |
+          rm -rf target/fb
+          mkdir -p target/fb/tmp
+          mkdir -p $GITHUB_WORKSPACE/artifact
+          pushd target/fb/tmp
+          FLUENT_BIT_RELEASE=$(cut -d. -f1-2 <<< "${FB_WIN_VERSION}")
+          wget "http://fluentbit.io/releases/${FLUENT_BIT_RELEASE}/td-agent-bit-${FB_WIN_VERSION}-win32".zip
+          unzip td-agent-bit-${FB_WIN_VERSION}-win32.zip
+          zip -r -j $GITHUB_WORKSPACE/artifact/nrfb-windows-386.zip td-agent-bit-${FB_WIN_VERSION}-win32/bin
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: nrfb-windows-386
+          path: artifact/nrfb-windows-386.zip
+
+  win64:
+
+    name: Build Windows amd64
+    runs-on: ubuntu-16.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Retrieve win version
+        run: echo "FB_WIN_VERSION=$(awk -F, '/^windows,/ {print $2}' nr_fb_version)"  >> $GITHUB_ENV
+
+      - name: Print version
+        run: echo "FB_WIN= ${{ env.FB_WIN_VERSION}}"
+
+      - name: Download FB for windows64 & create artifact
+        run: |
+          rm -rf target/fb
+          mkdir -p target/fb/tmp
+          mkdir -p $GITHUB_WORKSPACE/artifact
+          pushd target/fb/tmp
+          FLUENT_BIT_RELEASE=$(cut -d. -f1-2 <<< "${FB_WIN_VERSION}")
+          wget "http://fluentbit.io/releases/${FLUENT_BIT_RELEASE}/td-agent-bit-${FB_WIN_VERSION}-win64".zip
+          unzip td-agent-bit-${FB_WIN_VERSION}-win64.zip
+          zip -r -j $GITHUB_WORKSPACE/artifact/nrfb-windows-amd64.zip td-agent-bit-${FB_WIN_VERSION}-win64/bin
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: nrfb-windows-amd64
+          path: artifact/nrfb-windows-amd64.zip
